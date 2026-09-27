@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BlokuShen</title>
+    <!-- 全面引入 Font Awesome 6 圖標庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- 頂部導航與功能控制列 -->
+    <header class="app-header">
+        <div class="brand-section">
+            <i class="fa-solid fa-shapes brand-logo-icon"></i>
+            <h1 class="brand-title">BlokuShen</h1>
+        </div>
+
+        <div class="header-controls">
+            <!-- 模式切換 -->
+            <div class="select-control-group">
+                <i class="fa-solid fa-gamepad"></i>
+                <label for="select-game-mode">模式：</label>
+                <select id="select-game-mode" class="custom-select">
+                    <option value="1p">單人對弈 (玩家 vs 3電腦)</option>
+                    <option value="2p">雙人對決 (經典 2P 對戰)</option>
+                    <option value="4p">四人聚會 (本機 4P 輪流)</option>
+                </select>
+            </div>
+
+            <!-- 電腦難度 -->
+            <div class="select-control-group">
+                <i class="fa-solid fa-brain"></i>
+                <label for="select-ai-difficulty">AI難度：</label>
+                <select id="select-ai-difficulty" class="custom-select">
+                    <option value="normal">中級 (標準策略)</option>
+                    <option value="hard">高級 (專家戰術)</option>
+                    <option value="easy">初級 (輕鬆娛樂)</option>
+                </select>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <button id="btn-new-game" class="btn-icon-label primary" title="重新開始一局">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>新對局</span>
+            </button>
+            <button id="btn-show-rules" class="btn-icon-label" title="查看規則說明">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>規則說明</span>
+            </button>
+            <button id="btn-toggle-sound" class="btn-icon-label" title="開關音效">
+                <i class="fa-solid fa-volume-high"></i>
+                <span>音效</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 遊戲主體排版：左欄狀態 | 中間棋盤 | 右欄手牌 -->
+    <main class="main-container">
+
+        <!-- 左側：當前輪替與四方計分狀態 -->
+        <aside class="left-sidebar">
+            <!-- 當前回合標籤 -->
+            <div id="current-turn-banner" class="turn-banner">
+                <!-- 動態注入當前玩家 -->
+            </div>
+
+            <!-- 四位玩家即時戰況 -->
+            <div class="panel-card">
+                <div class="panel-title">
+                    <i class="fa-solid fa-users"></i>
+                    <span>對局狀態與得分</span>
+                </div>
+                <div id="players-score-list" class="players-score-list">
+                    <!-- 動態注入各玩家狀態卡片 -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中間：20x20 經典棋盤與棋子操作工具列 -->
+        <section class="center-board-area">
+            <!-- 即時操作指引步驟條 -->
+            <div id="step-guide-bar" class="step-guide-bar">
+                <span id="guide-step-1" class="guide-step active"><i class="fa-solid fa-hand-pointer"></i> 1. 選取手牌</span>
+                <i class="fa-solid fa-chevron-right guide-arrow"></i>
+                <span id="guide-step-2" class="guide-step"><i class="fa-solid fa-rotate-right"></i> 2. 旋轉/翻轉 (R/F)</span>
+                <i class="fa-solid fa-chevron-right guide-arrow"></i>
+                <span id="guide-step-3" class="guide-step"><i class="fa-solid fa-crosshairs"></i> 3. 點擊棋盤綠光處放置</span>
+            </div>
+
+            <!-- 即時動態提示訊息 (顯示放置失敗具體原因) -->
+            <div id="game-status-toast" class="game-status-toast"></div>
+
+            <div class="board-container">
+                <div id="board-grid" class="board-grid">
+                    <!-- 20 x 20 棋盤格子由 JS 動態生成 -->
+                </div>
+            </div>
+
+            <!-- 棋子操控與操作快捷按鈕列 (全面採用 Font Awesome) -->
+            <div class="piece-actions-bar">
+                <button id="btn-rotate-piece" class="btn-action" disabled title="快捷鍵：鍵盤 R 或空白鍵">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>旋轉 (R)</span>
+                </button>
+                <button id="btn-flip-piece" class="btn-action" disabled title="快捷鍵：鍵盤 F">
+                    <i class="fa-solid fa-arrows-left-right"></i>
+                    <span>翻轉 (F)</span>
+                </button>
+                <button id="btn-pass-turn" class="btn-action btn-pass" title="無法落子時棄權輪空">
+                    <i class="fa-solid fa-forward-step"></i>
+                    <span>棄權 (Pass)</span>
+                </button>
+                <button id="btn-undo-move" class="btn-action btn-undo" disabled title="快捷鍵：Ctrl+Z 悔棋撤銷">
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                    <span>悔棋</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 右側：當前玩家可選棋子手牌托盤 (21塊經典骨牌) -->
+        <aside class="right-sidebar">
+            <div class="piece-tray-container">
+                <div class="piece-tray-header">
+                    <div class="panel-title" style="margin-bottom: 0;">
+                        <i class="fa-solid fa-chess-board"></i>
+                        <span>手牌骨牌庫</span>
+                    </div>
+                    <span class="tray-hint"><i class="fa-solid fa-hand-pointer"></i> 點選後置入棋盤</span>
+                </div>
+                <div id="piece-tray" class="piece-tray">
+                    <!-- 21塊棋子預覽動態產生 -->
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- 吉祥物元件：初始於網頁左下角，支援全螢幕自由拖曳，懸停霓虹彩色發光與抖動 -->
+    <div id="mascot-container" class="mascot-container" title="我是 Chill 吉祥物！可以把我拖曳到任何地方喔！">
+        <div class="mascot-image-wrapper">
+            <img id="mascot-image" class="mascot-image" src="image/LiyuChillGuy.svg" alt="LiyuChillGuy 吉祥物" draggable="false">
+        </div>
+    </div>
+
+    <!-- 頁面下方版權宣告 (嚴格依據指定文字) -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <p class="copyright-text">Copyright © Liyuchiutiger Gongminshen</p>
+        </div>
+    </footer>
+
+    <!-- 規則說明彈窗 -->
+    <div id="modal-rules" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>BlokuShen 遊戲規則</span>
+                </h2>
+                <button id="btn-close-rules" class="modal-close-btn" title="關閉">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <h3 class="rule-section-title"><i class="fa-solid fa-flag-checkered"></i> 1. 第一手起步規則</h3>
+                    <p>每位玩家的第一塊棋子，其方塊中的其中一格必須覆蓋自己專屬的<span class="rule-highlight">角落起始星號格</span>（藍：左上、黃：右上、紅：右下、綠：左下）。</p>
+                </div>
+                <div>
+                    <h3 class="rule-section-title"><i class="fa-solid fa-compress"></i> 2. 接續放置規則（格格不入的核心靈魂）</h3>
+                    <p>第二手開始，所有新放置的棋子必須與自己已經在棋盤上的同色棋子至少有<span class="rule-highlight">「角對角 (Corner-to-corner)」</span>相接觸。</p>
+                    <p><span class="rule-forbidden">絕對嚴禁：</span>新棋子絕對不能與自己的同色棋子有任何<span class="rule-forbidden">「邊對邊 (Edge-to-edge)」</span>相連！</p>
+                    <p>不同顏色的棋子彼此之間則完全沒有任何限制，可以邊碰邊，也可角碰角。</p>
+                </div>
+                <div>
+                    <h3 class="rule-section-title"><i class="fa-solid fa-gamepad"></i> 3. 棋子變換與操作技巧</h3>
+                    <p>棋子放置前可自由進行旋轉（每次 90 度）與翻轉（左右鏡射），滑鼠滾輪或鍵盤 <kbd>R</kbd> 可快速旋轉，<kbd>F</kbd> 鍵可翻轉，<kbd>Esc</kbd> 取消選取。</p>
+                </div>
+                <div>
+                    <h3 class="rule-section-title"><i class="fa-solid fa-trophy"></i> 4. 勝負與計分方式</h3>
+                    <p>當所有玩家皆無處可下或主動 Pass 時遊戲結束。基本分數為手上未出清的方塊數記負分（每格 -1 分）。</p>
+                    <p>若成功將手上 21 塊棋子全數出清，可額外獲得 <span class="rule-highlight">+15 分</span>；若全數出清且最後一塊剛好為 1 格單骨牌，再額外加贈 <span class="rule-highlight">+5 分</span>（總計 +20 分大滿貫！）。總得分最高者為冠軍！</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遊戲結束結算彈窗 -->
+    <div id="modal-game-over" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fa-solid fa-trophy rank-gold"></i>
+                    <span>對局結算排行榜</span>
+                </h2>
+            </div>
+            <div class="modal-body">
+                <p>所有玩家皆已無法落子，戰況統計如下：</p>
+                <table id="game-result-table" class="game-result-table">
+                    <!-- 動態生成計分排行 -->
+                </table>
+                <div style="display: flex; justify-content: center; margin-top: 10px;">
+                    <button id="btn-restart-game" class="btn-icon-label primary" style="padding: 10px 24px; font-size: 15px;">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span>再玩一局</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入邏輯腳本 (順序：定義 -> 盤面 -> 決策 -> 音效 -> 吉祥物 -> 遊戲控制器) -->
+    <script src="js/pieces.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/mascot.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
